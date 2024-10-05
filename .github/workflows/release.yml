@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main # Trigger only on pushes to the main branch
+
+  workflow_dispatch: # Allows manually triggering the workflow for testing or urgent releases
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    if: github.repository == 'GLiClass.js'
+    permissions:
+      contents: write # Required to create the release
+      actions: read # For checking token permissions
+      issues: write # For creating an issue
+    name: Create GitHub Release and Publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      # Set NPM Registry to ensure the correct registry is used
+      - name: Set NPM Registry
+        run:
+          npm config set registry https://registry.npmjs.org/
+
+          # Set NPM registry and authentication token via .npmrc
+      - name: Create .npmrc file with auth token
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+
+      # Verify NPM Authentication
+      - name: Verify NPM Authentication
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Set up pnpm
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 6.0.2
+
+      # Install dependencies
+      - name: Install dependencies
+        run: pnpm install
+
+      # Check for pending changesets before proceeding with the release
+      - name: Check for changesets
+        id: check_changesets
+        run: |
+          if pnpm changeset status | grep -q "No unreleased changesets"; then
+            echo "No unreleased changesets found. Skipping version bump and release."
+            exit 0
+          fi
+        continue-on-error: false # If no changesets are found, this step will stop the workflow
+
+      # Run Changesets to version the packages and apply changelogs
+      - name: Run Changesets version
+        if: steps.check_changesets.outcome == 'success'
+        run: pnpm changeset version
+
+      # Commit the version bump and changelog updates (if applicable)
+      - name: Commit version bump
+        if: steps.check_changesets.outcome == 'success'
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Version bump and changelog update"
+          git push
+
+      # Extract package name and version from package.json
+      - name: Get name and version from package.json
+        id: get_package_info
+        run: |
+          NAME=$(jq -r '.name' package.json)
+          VERSION=$(jq -r '.version' package.json)
+          echo "PACKAGE_NAME=$NAME" >> $GITHUB_ENV
+          echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Create a new Git tag based on the version from package.json
+      - name: Create Tag
+        if: steps.check_changesets.outcome == 'success'
+        run: |
+          git tag v${{ env.PACKAGE_VERSION }}
+          git push origin v${{ env.PACKAGE_VERSION }}
+
+      # Build the package (after version bump)
+      - name: Build the package
+        if: steps.check_changesets.outcome == 'success'
+        run: pnpm run build # Ensure you have a build script in your package.json
+
+      # Create release archives (zip and gzip)
+      - name: Create source code archives
+        if: steps.check_changesets.outcome == 'success'
+        run: |
+          zip -r ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.zip dist package.json src README.md CHANGELOG.md
+          tar -czvf ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.tar.gz dist package.json src README.md CHANGELOG.md
+
+      # Create GitHub Release and Upload Release Assets (with display name "Source Code")
+      - name: Create GitHub Release and Upload Assets
+        if: steps.check_changesets.outcome == 'success'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.PACKAGE_VERSION }} # Use the tag created in the previous step
+          name: ${{ env.PACKAGE_VERSION }} # Use the version as the release name
+          files: |
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.zip#Source Code
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}.tar.gz#Source Code
+        env:
+          GITHUB_TOKEN:
+            ${{ secrets.GITHUB_TOKEN }} # GitHub token for authentication
+
+
+            # Set the NPM authentication token using pnpm
+      - name: Set NPM Auth Token
+        run: pnpm config set //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}
+
+      # Publish to npm (activated)
+      - name: Publish to npm
+        if: steps.check_changesets.outcome == 'success'
+        run: pnpm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Use NPM token for publishing
