@@ -1,13 +1,12 @@
 
-# ⭐GLiClass.c: Generalist and Lightweight Model for Sequence Classification in C
+# ⭐GLiClass.js: Generalist and Lightweight Model for Sequence Classification in JS
 
-GLiClass.c is a C - based inference engine for running GLiClass(Generalist and Lightweight Model for Sequence Classification) models. This is an efficient zero-shot classifier inspired by [GLiNER](https://github.com/urchade/GLiNER) work. It demonstrates the same performance as a cross-encoder while being more compute-efficient because classification is done at a single forward path.  
+GLiClass.js is a TypeScript - based inference engine for running GLiClass(Generalist and Lightweight Model for Sequence Classification) models. This is an efficient zero-shot classifier inspired by [GLiNER](https://github.com/urchade/GLiNER) work. It demonstrates the same performance as a cross-encoder while being more compute-efficient because classification is done at a single forward path.  
 
 It can be used for topic classification, sentiment analysis and as a reranker in RAG pipelines.
 
 <p align="center">
-    <img src="kg.png" style="position: relative; top: 5px;">
-    <a href="https://www.knowledgator.com/"> Knowledgator</a>
+    <a href="https://www.knowledgator.com/"> ☋ Knowledgator</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
     <a href="https://www.linkedin.com/company/knowledgator/">✔️ LinkedIn</a>
     <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -18,7 +17,7 @@ It can be used for topic classification, sentiment analysis and as a reranker in
     <a href="https://huggingface.co/collections/knowledgator/gliclass-6661838823756265f2ac3848">🤗 GliClass Collection</a>
 </p>
 
-## 🌟 Key Features
+## 💫 Key Features
 
 - Flexible entity recognition without predefined categories
 - Lightweight and fast inference
@@ -61,19 +60,19 @@ console.log(decoded);
 
 #### ONNX settings API
 
-- modelPath: can be either a URL to a local model as in the basic example, or it can also be the Model itself as an array of binary data.
-- executionProvider: these are the same providers that ONNX web supports, currently we allow `webgpu` (recommended), `cpu`, `wasm`, `webgl` but more can be added
-- wasmPaths: Path to the wasm binaries, this can be either a URL to the binaries like a CDN url, or a local path to a folder with the binaries.
-- multiThread: wether to multithread at all, only relevent for wasm and cpu exeuction providers.
-- multiThread: When choosing the wasm or cpu provider, multiThread will allow you to specify the number of cores you want to use.
-- fetchBinary: will prefetch the binary from the default or provided wasm paths
+- *modelPath*: can be either a URL to a local model as in the basic example, or it can also be the Model itself as an array of binary data.
+- *executionProvider*: these are the same providers that ONNX web supports, currently we allow `webgpu` (recommended), `cpu`, `wasm`, `webgl` but more can be added
+- *wasmPaths*: Path to the wasm binaries, this can be either a URL to the binaries like a CDN url, or a local path to a folder with the binaries.
+- *multiThread*: wether to multithread at all, only relevent for wasm and cpu exeuction providers.
+- *multiThread*: When choosing the wasm or cpu provider, multiThread will allow you to specify the number of cores you want to use.
+- *fetchBinary*: will prefetch the binary from the default or provided wasm paths
 
 ## 🛠 Setup & Model Preparation
 
 To use GLiNER models in a web environment, you need an ONNX format model. You can:
 
 1. Search for pre-converted models on [HuggingFace](https://huggingface.co/onnx-community?search_models=gliclass)
-2. Convert a model yourself using the [official Python script](https://github.com/Knowledgator/GLiClass.c/blob/main/ONNX_CONVERTING/convert_to_onnx.py)
+2. Convert a model yourself using the Python `convert_to_onnx.py`.
 
 ### Converting to ONNX Format
 

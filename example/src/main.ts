@@ -2,7 +2,7 @@ import { Gliclass } from "../../src";
 
 async function main(): Promise<void> {
   const gliclass = new Gliclass({
-    tokenizerPath: "knowledgator/gliclass-small-v1.0",
+    tokenizerPath: "knowledgator/gliclass-small-v1.0-init",
     onnxSettings: {
       modelPath: "public/model.onnx",
       executionProvider: "cpu",
@@ -10,6 +10,8 @@ async function main(): Promise<void> {
     },
     promptFirst: false,
   });
+
+  console.log("Loading a Model...");
 
   await gliclass.initialize();
 
@@ -40,16 +42,17 @@ async function main(): Promise<void> {
   const labels = ["finances", "science", "politics", "business", "sport"];
 
   try {
+    let multiLabel = true;
     const start = performance.now();
     console.log("Running inference #1...");
-    const decoded = await gliclass.inference({ texts, labels });
+    const decoded = await gliclass.inference({ texts, labels, multiLabel });
     console.log(decoded);
     const end = performance.now();
     console.log(`Inference #1 took ${end - start} ms`);
 
     const start2 = performance.now();
     console.log("Running inference #2...");
-    const decoded2 = await gliclass.inference({ texts: [input_text2], labels });
+    const decoded2 = await gliclass.inference({ texts: [input_text2], labels, multiLabel });
     const end2 = performance.now();
     console.log(`Inference #2 took ${end2 - start2} ms`);
     console.log(decoded2);
